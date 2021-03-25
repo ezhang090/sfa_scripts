@@ -44,7 +44,19 @@ class SmartSaveUI(QtWidgets.QDialog):
         self.setLayout(self.main_lay)
 
     def create_connections(self):
+        """Connect signals and slots"""
         self.folder_browse_btn.clicked.connect(self._browse_folder)
+        self.save_btn.clicked.connect(self._save)
+
+    @QtCore.Slot()
+    def _save(self):
+        """Save the scene"""
+        self.scenefile.folder_path = self.folder_le.text()
+        self.scenefile.descriptor = self.descriptor_le.text()
+        self.scenefile.task = self.task_le.text()
+        self.scenefile.ver = self.ver_sbx.value()
+        self.scenefile.ext = self.ext_lbl.text()
+        self.scenefile.save()
 
     @QtCore.Slot()
     def _browse_folder(self):
@@ -124,6 +136,14 @@ class SceneFile(object):
         self._init_from_path(path)
 
     @property
+    def folder_path(self):
+        return self._folder_path
+
+    @folder_path.setter
+    def folder_path(self, val):
+        self._folder_path = Path(val)
+
+    @property
     def filename(self):
         pattern = "{descriptor}_{task}_v{ver:03d}{ext}"
         return pattern.format(descriptor=self.descriptor,
@@ -137,10 +157,11 @@ class SceneFile(object):
 
     def _init_from_path(self, path):
         path = Path(path)
-        self.folder_path = path.parent
+        self._folder_path = path.parent
         self.ext = path.ext
         self.descriptor, self.task, ver = path.name.stripext().split("_")
         self.ver = int(ver.split("v")[-1])
+
 
     def save(self):
         """saves the scene file
