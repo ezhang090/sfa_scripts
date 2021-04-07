@@ -43,8 +43,12 @@ class ScatterUI(QtWidgets.QDialog):
         selection = cmds.ls(type="mesh")
         for geo in selection:
             self.source_dd.addItem(geo)
+        self.source_dd.currentIndexChanged.connect(
+            self.source_index_changed)
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.source_dd_lbl)
         layout.addWidget(self.source_dd)
         return layout
 
+    def source_index_changed(self):
+        cmds.select(self.source_dd.currentText())
