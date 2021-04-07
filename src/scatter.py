@@ -17,6 +17,7 @@ def maya_main_window():
 
 class ScatterUI(QtWidgets.QDialog):
     """Scatter UI Class"""
+
     def __init__(self):
         """Constructor"""
         super(ScatterUI, self).__init__(parent=maya_main_window())
@@ -32,9 +33,13 @@ class ScatterUI(QtWidgets.QDialog):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
         self.source_dd_lay = self._create_source_dd()
+        self.destination_dd_lay = self._create_destination_dd()
+        self.scale_ui = self._create_scale_ui()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
         self.main_lay.addLayout(self.source_dd_lay)
+        self.main_lay.addLayout(self.destination_dd_lay)
+        self.main_lay.addLayout(self.scale_ui)
         self.setLayout(self.main_lay)
 
     def _create_source_dd(self):
@@ -52,3 +57,40 @@ class ScatterUI(QtWidgets.QDialog):
 
     def source_index_changed(self):
         cmds.select(self.source_dd.currentText())
+
+    def _create_destination_dd(self):
+        self.destination_dd_lbl = QtWidgets.QLabel("Select Destination "
+                                                   "Object")
+        self.destination_dd = QtWidgets.QComboBox()
+        selection = cmds.ls(type="mesh")
+        for geo in selection:
+            self.destination_dd.addItem(geo)
+        self.destination_dd.currentIndexChanged.connect(
+            self.destination_index_changed)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.destination_dd_lbl)
+        layout.addWidget(self.destination_dd)
+        return layout
+
+    def destination_index_changed(self):
+        cmds.select(self.destination_dd.currentText(), toggle=True)
+
+    def _create_scale_ui(self):
+        layout = self._create_scale_headers()
+        self.xscale_lbl = QtWidgets.QLabel("x Scale")
+        self.yscale_lbl = QtWidgets.QLabel("y Scale")
+        self.zscale_lbl = QtWidgets.QLabel("z Scale")
+        layout.addWidget(self.xscale_lbl, 1, 0)
+        layout.addWidget(self.yscale_lbl, 2, 0)
+        layout.addWidget(self.zscale_lbl, 3, 0)
+        return layout
+
+    def _create_scale_headers(self):
+        self.min_lbl = QtWidgets.QLabel("Minimum")
+        self.min_lbl.setStyleSheet("font: bold")
+        self.max_lbl = QtWidgets.QLabel("Maximum")
+        self.max_lbl.setStyleSheet("font: bold")
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(self.min_lbl, 0, 1)
+        layout.addWidget(self.max_lbl, 0, 2)
+        return layout
