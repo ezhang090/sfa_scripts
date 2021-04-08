@@ -22,12 +22,13 @@ class ScatterUI(QtWidgets.QDialog):
         """Constructor"""
         super(ScatterUI, self).__init__(parent=maya_main_window())
         self.setWindowTitle("Scatter Tool")
-        self.setMinimumWidth(500)
-        self.setMaximumWidth(1000)
-        self.setMaximumHeight(500)
+        self.setMinimumWidth(300)
+        self.setMaximumWidth(400)
+        self.setMaximumHeight(300)
         self.setWindowFlags(self.windowFlags() ^
                            QtCore.Qt.WindowContextHelpButtonHint)
         self.create_ui()
+        self.create_connections()
 
     def create_ui(self):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
@@ -44,6 +45,10 @@ class ScatterUI(QtWidgets.QDialog):
         self.main_lay.addLayout(self.button_lay)
         self.setLayout(self.main_lay)
 
+    @QtCore.Slot()
+    def create_connections(self):
+        self.scatter_btn.clicked.connect(self.scatter_objects)
+
     def _create_button_ui(self):
         self.scatter_btn = QtWidgets.QPushButton("Scatter")
         layout = QtWidgets.QHBoxLayout()
@@ -51,9 +56,11 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def _create_source_dd(self):
+        """create dropdown menu to select source object"""
         self.source_dd_lbl = QtWidgets.QLabel("Select Source Object")
         self.source_dd = QtWidgets.QComboBox()
         selection = cmds.ls(type="mesh")
+        self.source_dd.addItem("Please Select Object")
         for geo in selection:
             self.source_dd.addItem(geo)
         self.source_dd.currentIndexChanged.connect(
@@ -67,10 +74,12 @@ class ScatterUI(QtWidgets.QDialog):
         cmds.select(self.source_dd.currentText())
 
     def _create_destination_dd(self):
+        """create dropdown menu to select destination object"""
         self.destination_dd_lbl = QtWidgets.QLabel("Select Destination "
                                                    "Object")
         self.destination_dd = QtWidgets.QComboBox()
         selection = cmds.ls(type="mesh")
+        self.destination_dd.addItem("Please Select Object")
         for geo in selection:
             self.destination_dd.addItem(geo)
         self.destination_dd.currentIndexChanged.connect(
@@ -152,3 +161,18 @@ class ScatterUI(QtWidgets.QDialog):
         layout.addWidget(self.min_lbl, 0, 1)
         layout.addWidget(self.max_lbl, 0, 2)
         return layout
+
+    @QtCore.Slot()
+    def scatter_objects(self):
+        vtx_selection = cmds.polyListComponentConversion(self.destination_dd.currentText(),
+                                                         toVertex=True)
+        vtx_selection = cmds.filterExpand(vtx_selection, selectionMask=31)
+
+        scattered_instances = []
+        for vtx in vtx_selection:
+            scatter_instance = cmds.instance(self.source_dd.currentText())
+            scattered_instances.extend(scatter_instance)
+            pos = cmds.xform([vtx], query=True, translation=True)
+            cmds.xform(scatter_instance, translation=pos)
+
+        cmds.group(scattered_instances, name="scattered")
