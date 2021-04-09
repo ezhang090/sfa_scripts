@@ -24,7 +24,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.setMaximumWidth(400)
         self.setMaximumHeight(300)
         self.setWindowFlags(self.windowFlags() ^
-                           QtCore.Qt.WindowContextHelpButtonHint)
+                            QtCore.Qt.WindowContextHelpButtonHint)
         self.create_ui()
         self.create_connections()
 
@@ -32,13 +32,13 @@ class ScatterUI(QtWidgets.QDialog):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
         self.source_dd_lay = self._create_source_dd()
-        self.destination_dd_lay = self._create_destination_dd()
+        self.destination_lay = self._create_destination()
         self.input_ui = self._create_input_ui()
         self.button_lay = self._create_button_ui()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
         self.main_lay.addLayout(self.source_dd_lay)
-        self.main_lay.addLayout(self.destination_dd_lay)
+        self.main_lay.addLayout(self.destination_lay)
         self.main_lay.addLayout(self.input_ui)
         self.main_lay.addLayout(self.button_lay)
         self.setLayout(self.main_lay)
@@ -71,24 +71,15 @@ class ScatterUI(QtWidgets.QDialog):
     def source_index_changed(self):
         cmds.select(self.source_dd.currentText())
 
-    def _create_destination_dd(self):
-        """create dropdown menu to select destination object"""
-        self.destination_dd_lbl = QtWidgets.QLabel("Select Destination "
-                                                   "Object")
-        self.destination_dd = QtWidgets.QComboBox()
-        selection = cmds.ls(type="mesh")
-        self.destination_dd.addItem("Please Select Object")
-        for geo in selection:
-            self.destination_dd.addItem(geo)
-        self.destination_dd.currentIndexChanged.connect(
-            self.destination_index_changed)
+    def _create_destination(self):
+        """select destination vertices"""
+        self.destination_lbl = QtWidgets.QLabel("Please select the "
+                                                   "objects and vertices you would "
+                                                   "like to scatter to.")
         layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(self.destination_dd_lbl)
-        layout.addWidget(self.destination_dd)
+        layout.addWidget(self.destination_lbl)
         return layout
 
-    def destination_index_changed(self):
-        cmds.select(self.destination_dd.currentText(), toggle=True)
 
     def _create_input_ui(self):
         layout = self._create_input_headers()
@@ -98,17 +89,17 @@ class ScatterUI(QtWidgets.QDialog):
 
     def _min_input_ui(self, layout):
         self.xscale_min_le = QtWidgets.QLineEdit('1')
-        self.xscale_min_le.setFixedWidth(100)
+        self.xscale_min_le.setMinimumWidth(100)
         self.yscale_min_le = QtWidgets.QLineEdit('1')
-        self.yscale_min_le.setFixedWidth(100)
+        self.yscale_min_le.setMinimumWidth(100)
         self.zscale_min_le = QtWidgets.QLineEdit('1')
-        self.zscale_min_le.setFixedWidth(100)
+        self.zscale_min_le.setMinimumWidth(100)
         self.xrotate_min_le = QtWidgets.QLineEdit('0')
-        self.xrotate_min_le.setFixedWidth(100)
+        self.xrotate_min_le.setMinimumWidth(100)
         self.yrotate_min_le = QtWidgets.QLineEdit('0')
-        self.yrotate_min_le.setFixedWidth(100)
+        self.yrotate_min_le.setMinimumWidth(100)
         self.zrotate_min_le = QtWidgets.QLineEdit('0')
-        self.zrotate_min_le.setFixedWidth(100)
+        self.zrotate_min_le.setMinimumWidth(100)
         layout.addWidget(self.xscale_min_le, 1, 1)
         layout.addWidget(self.yscale_min_le, 2, 1)
         layout.addWidget(self.zscale_min_le, 3, 1)
@@ -119,18 +110,18 @@ class ScatterUI(QtWidgets.QDialog):
 
     def _max_input_ui(self, layout):
 
-        self.xscale_max_le = QtWidgets.QLineEdit()
-        self.xscale_max_le.setFixedWidth(100)
-        self.yscale_max_le = QtWidgets.QLineEdit()
-        self.yscale_max_le.setFixedWidth(100)
-        self.zscale_max_le = QtWidgets.QLineEdit()
-        self.zscale_max_le.setFixedWidth(100)
-        self.xrotate_max_le = QtWidgets.QLineEdit()
-        self.xrotate_max_le.setFixedWidth(100)
-        self.yrotate_max_le = QtWidgets.QLineEdit()
-        self.yrotate_max_le.setFixedWidth(100)
-        self.zrotate_max_le = QtWidgets.QLineEdit()
-        self.zrotate_max_le.setFixedWidth(100)
+        self.xscale_max_le = QtWidgets.QLineEdit('1')
+        self.xscale_max_le.setMinimumWidth(100)
+        self.yscale_max_le = QtWidgets.QLineEdit('1')
+        self.yscale_max_le.setMinimumWidth(100)
+        self.zscale_max_le = QtWidgets.QLineEdit('1')
+        self.zscale_max_le.setMinimumWidth(100)
+        self.xrotate_max_le = QtWidgets.QLineEdit('0')
+        self.xrotate_max_le.setMinimumWidth(100)
+        self.yrotate_max_le = QtWidgets.QLineEdit('0')
+        self.yrotate_max_le.setMinimumWidth(100)
+        self.zrotate_max_le = QtWidgets.QLineEdit('0')
+        self.zrotate_max_le.setMinimumWidth(100)
         layout.addWidget(self.xscale_max_le, 1, 2)
         layout.addWidget(self.yscale_max_le, 2, 2)
         layout.addWidget(self.zscale_max_le, 3, 2)
@@ -163,20 +154,10 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def scatter_objects(self):
+        print(self.zrotate_max_le.text)
         self.scatter.scatter_objects(self.source_dd.currentText(),
-                                     self.destination_dd.currentText())
-        # vtx_selection = cmds.polyListComponentConversion(self.destination_dd.currentText(),
-        #                                                  toVertex=True)
-        # vtx_selection = cmds.filterExpand(vtx_selection, selectionMask=31)
-        #
-        # scattered_instances = []
-        # for vtx in vtx_selection:
-        #     scatter_instance = cmds.instance(self.source_dd.currentText())
-        #     scattered_instances.extend(scatter_instance)
-        #     pos = cmds.xform([vtx], query=True, translation=True)
-        #     cmds.xform(scatter_instance, translation=pos)
-        #
-        # cmds.group(scattered_instances, name="scattered")
+                                     cmds.ls(sl=True))
+
 
 class RandomScatter(object):
     """random scatter object."""
@@ -197,15 +178,17 @@ class RandomScatter(object):
             cmds.xform(scatter_instance, translation=pos)
         cmds.group(scattered_instances, name="scattered")
 
-    # def random_scale(self):
-    #     xRot = random.uniform(0, 360)  # replace with input values
-    #     yRot = random.uniform(0, 360)
-    #     zRot = random.uniform(0, 360)
-    #
-    #     cmds.rotate(xRot, yRot, zRot, self.source_dd.currentText())  # replace with sourceobject
-    #
-    #     scalingFactor = random.uniform(0.3,
-    #                                    1.5)  # replace with input values from le boxes
-    #     cmds.scale(scalingFactor, scalingFactor, scalingFactor,
-    #                self.source_dd.currentText())  # replace with xyz
+    def random_scale(self):
+        xRot = random.uniform(0, 360)  # replace with input values
+        yRot = random.uniform(0, 360)
+        zRot = random.uniform(0, 360)
+
+        cmds.rotate(xRot, yRot, zRot, self.source_dd.currentText())  # replace with sourceobject
+
+        xScale = random.uniform(0, 360)
+        yScale = random.uniform(0, 360)
+        zScale = random.uniform(0, 360)  # replace with input values from le boxes
+
+        cmds.scale(xScale, yScale, zScale,
+                   self.source_dd.currentText())  # replace with xyz
 
