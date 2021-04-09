@@ -1,12 +1,9 @@
-import logging
+import random
 from PySide2 import QtWidgets, QtCore
 from shiboken2 import wrapInstance
 import maya.OpenMayaUI as omui
 import maya.cmds as cmds
 import pymel.core as pmc
-from pymel.core.system import Path
-
-log = logging.getLogger(__name__)
 
 
 def maya_main_window():
@@ -21,6 +18,7 @@ class ScatterUI(QtWidgets.QDialog):
     def __init__(self):
         """Constructor"""
         super(ScatterUI, self).__init__(parent=maya_main_window())
+        self.scatter = RandomScatter()
         self.setWindowTitle("Scatter Tool")
         self.setMinimumWidth(300)
         self.setMaximumWidth(400)
@@ -99,17 +97,17 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def _min_input_ui(self, layout):
-        self.xscale_min_le = QtWidgets.QLineEdit()
+        self.xscale_min_le = QtWidgets.QLineEdit('1')
         self.xscale_min_le.setFixedWidth(100)
-        self.yscale_min_le = QtWidgets.QLineEdit()
+        self.yscale_min_le = QtWidgets.QLineEdit('1')
         self.yscale_min_le.setFixedWidth(100)
-        self.zscale_min_le = QtWidgets.QLineEdit()
+        self.zscale_min_le = QtWidgets.QLineEdit('1')
         self.zscale_min_le.setFixedWidth(100)
-        self.xrotate_min_le = QtWidgets.QLineEdit()
+        self.xrotate_min_le = QtWidgets.QLineEdit('0')
         self.xrotate_min_le.setFixedWidth(100)
-        self.yrotate_min_le = QtWidgets.QLineEdit()
+        self.yrotate_min_le = QtWidgets.QLineEdit('0')
         self.yrotate_min_le.setFixedWidth(100)
-        self.zrotate_min_le = QtWidgets.QLineEdit()
+        self.zrotate_min_le = QtWidgets.QLineEdit('0')
         self.zrotate_min_le.setFixedWidth(100)
         layout.addWidget(self.xscale_min_le, 1, 1)
         layout.addWidget(self.yscale_min_le, 2, 1)
@@ -120,6 +118,7 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def _max_input_ui(self, layout):
+
         self.xscale_max_le = QtWidgets.QLineEdit()
         self.xscale_max_le.setFixedWidth(100)
         self.yscale_max_le = QtWidgets.QLineEdit()
@@ -164,15 +163,49 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def scatter_objects(self):
-        vtx_selection = cmds.polyListComponentConversion(self.destination_dd.currentText(),
-                                                         toVertex=True)
+        self.scatter.scatter_objects(self.source_dd.currentText(),
+                                     self.destination_dd.currentText())
+        # vtx_selection = cmds.polyListComponentConversion(self.destination_dd.currentText(),
+        #                                                  toVertex=True)
+        # vtx_selection = cmds.filterExpand(vtx_selection, selectionMask=31)
+        #
+        # scattered_instances = []
+        # for vtx in vtx_selection:
+        #     scatter_instance = cmds.instance(self.source_dd.currentText())
+        #     scattered_instances.extend(scatter_instance)
+        #     pos = cmds.xform([vtx], query=True, translation=True)
+        #     cmds.xform(scatter_instance, translation=pos)
+        #
+        # cmds.group(scattered_instances, name="scattered")
+
+class RandomScatter(object):
+    """random scatter object."""
+
+    def __init__(self):
+        pass
+
+    def scatter_objects(self, source_selection, destination_selection):
+        vtx_selection = cmds.polyListComponentConversion(
+            destination_selection, toVertex=True)
         vtx_selection = cmds.filterExpand(vtx_selection, selectionMask=31)
 
         scattered_instances = []
         for vtx in vtx_selection:
-            scatter_instance = cmds.instance(self.source_dd.currentText())
+            scatter_instance = cmds.instance(source_selection)
             scattered_instances.extend(scatter_instance)
             pos = cmds.xform([vtx], query=True, translation=True)
             cmds.xform(scatter_instance, translation=pos)
-
         cmds.group(scattered_instances, name="scattered")
+
+    # def random_scale(self):
+    #     xRot = random.uniform(0, 360)  # replace with input values
+    #     yRot = random.uniform(0, 360)
+    #     zRot = random.uniform(0, 360)
+    #
+    #     cmds.rotate(xRot, yRot, zRot, self.source_dd.currentText())  # replace with sourceobject
+    #
+    #     scalingFactor = random.uniform(0.3,
+    #                                    1.5)  # replace with input values from le boxes
+    #     cmds.scale(scalingFactor, scalingFactor, scalingFactor,
+    #                self.source_dd.currentText())  # replace with xyz
+
