@@ -18,7 +18,7 @@ class ScatterUI(QtWidgets.QDialog):
     def __init__(self):
         """Constructor"""
         super(ScatterUI, self).__init__(parent=maya_main_window())
-        self.scatter = RandomScatter()
+        self.scatter = RandomScatter(self)
         self.setWindowTitle("Scatter Tool")
         self.setMinimumWidth(300)
         self.setMaximumWidth(400)
@@ -109,7 +109,6 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def _max_input_ui(self, layout):
-
         self.xscale_max_le = QtWidgets.QLineEdit('1')
         self.xscale_max_le.setMinimumWidth(100)
         self.yscale_max_le = QtWidgets.QLineEdit('1')
@@ -154,7 +153,6 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def scatter_objects(self):
-        print(self.zrotate_max_le.text)
         self.scatter.scatter_objects(self.source_dd.currentText(),
                                      cmds.ls(sl=True))
 
@@ -162,7 +160,8 @@ class ScatterUI(QtWidgets.QDialog):
 class RandomScatter(object):
     """random scatter object."""
 
-    def __init__(self):
+    def __init__(self, ui_instance):
+        self.ui_scatter = ui_instance
         pass
 
     def scatter_objects(self, source_selection, destination_selection):
@@ -173,22 +172,24 @@ class RandomScatter(object):
         scattered_instances = []
         for vtx in vtx_selection:
             scatter_instance = cmds.instance(source_selection)
+            self.random_scale(scatter_instance)
             scattered_instances.extend(scatter_instance)
             pos = cmds.xform([vtx], query=True, translation=True)
             cmds.xform(scatter_instance, translation=pos)
         cmds.group(scattered_instances, name="scattered")
 
-    def random_scale(self):
-        xRot = random.uniform(0, 360)  # replace with input values
-        yRot = random.uniform(0, 360)
-        zRot = random.uniform(0, 360)
+    def random_scale(self, randomized_object):
+        xRot = random.uniform(float(self.ui_scatter.xrotate_min_le.displayText()), float(self.ui_scatter.xrotate_max_le.displayText()))
+        yRot = random.uniform(float(self.ui_scatter.yrotate_min_le.displayText()), float(self.ui_scatter.yrotate_max_le.displayText()))
+        zRot = random.uniform(float(self.ui_scatter.zrotate_min_le.displayText()), float(self.ui_scatter.zrotate_max_le.displayText()))
 
-        cmds.rotate(xRot, yRot, zRot, self.source_dd.currentText())  # replace with sourceobject
+        cmds.rotate(xRot, yRot, zRot, randomized_object)
 
-        xScale = random.uniform(0, 360)
-        yScale = random.uniform(0, 360)
-        zScale = random.uniform(0, 360)  # replace with input values from le boxes
+        xScale = random.uniform(float(self.ui_scatter.xscale_min_le.displayText()), float(self.ui_scatter.xscale_max_le.displayText()))
+        yScale = random.uniform(float(self.ui_scatter.yscale_min_le.displayText()), float(self.ui_scatter.yscale_max_le.displayText()))
+        zScale = random.uniform(float(self.ui_scatter.zscale_min_le.displayText()), float(self.ui_scatter.zscale_max_le.displayText()))
 
-        cmds.scale(xScale, yScale, zScale,
-                   self.source_dd.currentText())  # replace with xyz
+        cmds.scale(xScale, yScale, zScale, randomized_object)
+
+
 
