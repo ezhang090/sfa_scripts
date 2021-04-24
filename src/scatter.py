@@ -34,6 +34,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.title_lbl.setStyleSheet("font: bold 20px")
         self.source_dd_lay = self._create_source_dd()
         self.percentage_lay = self._create_percentage()
+        self.seed_lay = self._create_seed()
         self.destination_lay = self._create_destination()
         self.input_ui = self._create_input_ui()
         self.button_lay = self._create_button_ui()
@@ -42,6 +43,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.main_lay.addWidget(self.title_lbl)
         self.main_lay.addLayout(self.source_dd_lay)
         self.main_lay.addLayout(self.percentage_lay)
+        self.main_lay.addLayout(self.seed_lay)
         self.main_lay.addLayout(self.destination_lay)
         self.main_lay.addLayout(self.normals_checkbox_lay)
         self.main_lay.addLayout(self.input_ui)
@@ -90,23 +92,33 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def _create_percentage(self):
-        self.percentage_lbl = QtWidgets.QLabel("Enter percentage "
-                                                       "of vertices to scattter to")
-        self.percentage = QtWidgets.QSlider(Qt.Horizontal)
-        self.percentage.setMinimum(0)
-        self.percentage.setMaximum(100)
-        self.percentage.setValue(100)
-        self.percentage_value_lbl = QtWidgets.QLabel(str(self.percentage.value()))
-        self.percentage.valueChanged.connect(self._slider_changed)
+        self.percentage_lbl = QtWidgets.QLabel("Percentage of Vertices:")
+        self.percentage_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.percentage_slider.setMinimum(0)
+        self.percentage_slider.setMaximum(100)
+        self.percentage_slider.setValue(100)
+        self.percentage_value_lbl = QtWidgets.QLabel(str(self.percentage_slider.value()))
+        self.percentage_slider.valueChanged.connect(self._slider_changed)
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.percentage_lbl)
-        layout.addWidget(self.percentage)
+        layout.addWidget(self.percentage_slider)
         layout.addWidget(self.percentage_value_lbl)
         return layout
 
     def _slider_changed(self):
-        print(self.percentage.value())
-        self.percentage_value_lbl.setText(str(self.percentage.value()))
+        print(self.percentage_slider.value())
+        self.percentage_value_lbl.setText(str(self.percentage_slider.value()))
+
+    def _create_seed(self):
+        self.seed_lbl = QtWidgets.QLabel("Set Seed:")
+        self.seed_le = QtWidgets.QLineEdit('453')
+        self.seed_lbl.setAlignment(Qt.AlignRight)
+        self.seed_le.setMaximumWidth(50)
+        self.seed_le.setAlignment(Qt.AlignHCenter)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.seed_lbl)
+        layout.addWidget(self.seed_le)
+        return layout
 
     def _create_destination(self):
         """select destination vertices"""
