@@ -1,5 +1,6 @@
 import random
 from PySide2 import QtWidgets, QtCore
+from PySide2.QtCore import Qt
 from shiboken2 import wrapInstance
 import maya.OpenMayaUI as omui
 import maya.cmds as cmds
@@ -21,8 +22,8 @@ class ScatterUI(QtWidgets.QDialog):
         self.scatter = RandomScatter(self)
         self.setWindowTitle("Scatter Tool")
         self.setMinimumWidth(300)
-        self.setMaximumWidth(400)
-        self.setMaximumHeight(300)
+        self.setMaximumWidth(500)
+        self.setMaximumHeight(500)
         self.setWindowFlags(self.windowFlags() ^
                             QtCore.Qt.WindowContextHelpButtonHint)
         self.create_ui()
@@ -32,13 +33,17 @@ class ScatterUI(QtWidgets.QDialog):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
         self.source_dd_lay = self._create_source_dd()
+        self.percentage_lay = self._create_percentage()
         self.destination_lay = self._create_destination()
         self.input_ui = self._create_input_ui()
         self.button_lay = self._create_button_ui()
+        self.normals_checkbox_lay = self._create_normals_checkbox()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
         self.main_lay.addLayout(self.source_dd_lay)
+        self.main_lay.addLayout(self.percentage_lay)
         self.main_lay.addLayout(self.destination_lay)
+        self.main_lay.addLayout(self.normals_checkbox_lay)
         self.main_lay.addLayout(self.input_ui)
         self.main_lay.addLayout(self.button_lay)
         self.setLayout(self.main_lay)
@@ -46,6 +51,18 @@ class ScatterUI(QtWidgets.QDialog):
     @QtCore.Slot()
     def create_connections(self):
         self.scatter_btn.clicked.connect(self.scatter_objects)
+
+    def _create_normals_checkbox(self):
+        self.normals_checkbox = QtWidgets.QCheckBox("Align with Normals")
+        self.normals_checkbox.setChecked(False)
+        self.normals_checkbox.toggled.connect(self._on_clicked)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.normals_checkbox, 0, 0)
+        return layout
+
+    def _on_clicked(self):
+        self.normals_checkbox = self.sender()
+        print("this works") #this is where the checkbox logic is called i think lol
 
     def _create_button_ui(self):
         self.scatter_btn = QtWidgets.QPushButton("Scatter")
@@ -71,6 +88,26 @@ class ScatterUI(QtWidgets.QDialog):
     def source_index_changed(self):
         cmds.select(self.source_dd.currentText())
 
+    @QtCore.Slot()
+    def _create_percentage(self):
+        self.percentage_lbl = QtWidgets.QLabel("Enter percentage "
+                                                       "of vertices to scattter to")
+        self.percentage = QtWidgets.QSlider(Qt.Horizontal)
+        self.percentage.setMinimum(0)
+        self.percentage.setMaximum(100)
+        self.percentage.setValue(100)
+        self.percentage_value_lbl = QtWidgets.QLabel(str(self.percentage.value()))
+        self.percentage.valueChanged.connect(self._slider_changed)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.percentage_lbl)
+        layout.addWidget(self.percentage)
+        layout.addWidget(self.percentage_value_lbl)
+        return layout
+
+    def _slider_changed(self):
+        print(self.percentage.value())
+        self.percentage_value_lbl.setText(str(self.percentage.value()))
+
     def _create_destination(self):
         """select destination vertices"""
         self.destination_lbl = QtWidgets.QLabel("Please select the "
@@ -79,7 +116,6 @@ class ScatterUI(QtWidgets.QDialog):
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.destination_lbl)
         return layout
-
 
     def _create_input_ui(self):
         layout = self._create_input_headers()
@@ -158,7 +194,7 @@ class ScatterUI(QtWidgets.QDialog):
 
 
 class RandomScatter(object):
-    """random scatter object."""
+    """random scatter logic."""
 
     def __init__(self, ui_instance):
         self.ui_scatter = ui_instance
@@ -191,5 +227,18 @@ class RandomScatter(object):
 
         cmds.scale(xScale, yScale, zScale, randomized_object)
 
+    def select_percentage(self):
+        selection = cmds.ls(selection=True, flatten=True)
+        selected_verts = cmds.polyListComponentConversion(selection,
+                                                          toVertex=True)
+        selected_verts = cmds.filterExpand(selected_verts, selectionMask=31)
+        seed = 453    #change seed
+        percentage_selection = []
+        for idx in range(0, len(selected_verts)):
+            random.seed(idx + seed)
+            rand_value = random.random()
+            if rand_value <= 0.1:   #put slider value here
+                percentage_selection.append(selected_verts[idx])
+        cmds.select(percentage_selection)
 
 
