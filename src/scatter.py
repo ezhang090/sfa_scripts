@@ -33,6 +33,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
         self.source_dd_lay = self._create_source_dd()
+        self.add_object_lay = self._create_add_source_button()
         self.percentage_lay = self._create_percentage()
         self.seed_lay = self._create_seed()
         self.destination_lay = self._create_destination()
@@ -42,6 +43,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
         self.main_lay.addLayout(self.source_dd_lay)
+        self.main_lay.addLayout(self.add_object_lay)
         self.main_lay.addLayout(self.percentage_lay)
         self.main_lay.addLayout(self.seed_lay)
         self.main_lay.addLayout(self.destination_lay)
@@ -70,6 +72,12 @@ class ScatterUI(QtWidgets.QDialog):
         self.scatter_btn = QtWidgets.QPushButton("Scatter")
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.scatter_btn)
+        return layout
+
+    def _create_add_source_button(self):
+        self.add_source_btn = QtWidgets.QPushButton("Add Objects")
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.add_source_btn)
         return layout
 
     def _create_source_dd(self):
