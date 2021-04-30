@@ -1,6 +1,7 @@
 import random
 from PySide2 import QtWidgets, QtCore
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, QItemSelectionModel
+from PySide2.QtWidgets import QAbstractItemView
 from shiboken2 import wrapInstance
 import maya.OpenMayaUI as omui
 import maya.cmds as cmds
@@ -32,7 +33,7 @@ class ScatterUI(QtWidgets.QDialog):
     def create_ui(self):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
-        self.source_dd_lay = self._create_source_dd()
+        self.source_list_lay = self._create_source_list()
         self.add_object_lay = self._create_add_source_button()
         self.percentage_lay = self._create_percentage()
         self.seed_lay = self._create_seed()
@@ -42,8 +43,8 @@ class ScatterUI(QtWidgets.QDialog):
         self.normals_checkbox_lay = self._create_normals_checkbox()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
-        self.main_lay.addLayout(self.source_dd_lay)
         self.main_lay.addLayout(self.add_object_lay)
+        self.main_lay.addLayout(self.source_list_lay)
         self.main_lay.addLayout(self.percentage_lay)
         self.main_lay.addLayout(self.seed_lay)
         self.main_lay.addLayout(self.destination_lay)
@@ -75,28 +76,44 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def _create_add_source_button(self):
-        self.add_source_btn = QtWidgets.QPushButton("Add Objects")
+        self.add_source_btn = QtWidgets.QPushButton("Add Source Objects")
+        self.add_source_btn.clicked.connect(self.add_source_object)
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.add_source_btn)
         return layout
 
-    def _create_source_dd(self):
-        """create dropdown menu to select source object"""
-        self.source_dd_lbl = QtWidgets.QLabel("Select Source Object")
-        self.source_dd = QtWidgets.QComboBox()
-        selection = cmds.ls(type="mesh")
-        self.source_dd.addItem("Please Select Object")
-        for geo in selection:
-            self.source_dd.addItem(geo)
-        self.source_dd.currentIndexChanged.connect(
-            self.source_index_changed)
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(self.source_dd_lbl)
-        layout.addWidget(self.source_dd)
-        return layout
+    def add_source_object(self):
+        #print("ajdfhaowehfsjdfh")
+        #self.source_dd.clear()
+        self._create_source_list()
 
-    def source_index_changed(self):
-        cmds.select(self.source_dd.currentText())
+    def _create_source_list(self):
+        """create dropdown menu to select source object"""
+        self.source_lbl = QtWidgets.QLabel("Source Objects")
+        self.source_list = QtWidgets.QListWidget()
+        self.source_list.setSelectionMode(QAbstractItemView.MultiSelection)
+        #populate source list
+        for obj in cmds.ls(type='mesh'):
+            self.source_list.addItem(obj)
+
+        # self.source_list.addItem('hi')
+        # self.source_list.addItem('im')
+        # self.source_list.addItem('sad')
+        #print(self.source_list.selectionMode())
+        #print(self.source_list.selectionModel())
+        #self.source_list.addItem("Selected Objects")
+        # objects = cmds.ls(type="mesh")
+        # for geo in objects:
+        #     self.source_list.addItem(geo)
+        # self.source_list.currentIndexChanged.connect(
+        #     self.source_index_changed)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.source_lbl)
+        layout.addWidget(self.source_list)
+        return layout
+    #
+    # def source_index_changed(self):
+    #     cmds.select(self.source_dd.currentText())
 
     @QtCore.Slot()
     def _create_percentage(self):
@@ -260,5 +277,10 @@ class RandomScatter(object):
             if rand_value <= 0.1:   #put slider value here
                 percentage_selection.append(selected_verts[idx])
         cmds.select(percentage_selection)
+
+    def align_to_normals(self):
+        constraint = cmds.normalConstraint('', '') #put vertex and instance
+        print(constraint)
+        cmds.delete(constraint)
 
 
