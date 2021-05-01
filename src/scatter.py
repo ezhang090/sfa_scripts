@@ -34,7 +34,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
         self.source_list_lay = self._create_source_list()
-        self.add_object_lay = self._create_add_source_button()
+        # self.add_object_lay = self._create_add_source_button()
         self.percentage_lay = self._create_percentage()
         self.seed_lay = self._create_seed()
         self.destination_lay = self._create_destination()
@@ -43,7 +43,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.normals_checkbox_lay = self._create_normals_checkbox()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
-        self.main_lay.addLayout(self.add_object_lay)
+        # self.main_lay.addLayout(self.add_object_lay)
         self.main_lay.addLayout(self.source_list_lay)
         self.main_lay.addLayout(self.percentage_lay)
         self.main_lay.addLayout(self.seed_lay)
@@ -60,11 +60,12 @@ class ScatterUI(QtWidgets.QDialog):
     def _create_normals_checkbox(self):
         self.normals_checkbox = QtWidgets.QCheckBox("Align with Normals")
         self.normals_checkbox.setChecked(False)
-        self.normals_checkbox.toggled.connect(self._on_clicked)
+        self.normals_checkbox.toggled.connect(self._on_clicked) #might not need this connection
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.normals_checkbox, 0, 0)
         return layout
 
+    #might not need this connection
     def _on_clicked(self):
         self.normals_checkbox = self.sender()
         print("this works") #this is where the checkbox logic is called i think lol
@@ -75,12 +76,12 @@ class ScatterUI(QtWidgets.QDialog):
         layout.addWidget(self.scatter_btn)
         return layout
 
-    def _create_add_source_button(self):
-        self.add_source_btn = QtWidgets.QPushButton("Add Source Objects")
-        self.add_source_btn.clicked.connect(self.add_source_object)
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(self.add_source_btn)
-        return layout
+    # def _create_add_source_button(self):
+    #     self.add_source_btn = QtWidgets.QPushButton("Add Source Objects")
+    #     self.add_source_btn.clicked.connect(self.add_source_object)
+    #     layout = QtWidgets.QHBoxLayout()
+    #     layout.addWidget(self.add_source_btn)
+    #     return layout
 
     def add_source_object(self):
         #print("ajdfhaowehfsjdfh")
@@ -226,9 +227,15 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def scatter_objects(self):
-        self.scatter.scatter_objects(self.source_dd.currentText(),
-                                     cmds.ls(sl=True))
+        # self.scatter.scatter_objects(self.source_list.currentText(),
+        #                              cmds.ls(sl=True))
+        #self.scatter.scatter_objects(self.source_list.selectedItems(), cmds.ls(sl=True))
+        source_objects = []
+        for source_obj in self.source_list.selectedItems():
+            source_objects.append(source_obj.text())
 
+        self.scatter.scatter_objects(source_objects,
+                                     cmds.ls(sl=True))
 
 class RandomScatter(object):
     """random scatter logic."""
@@ -241,15 +248,33 @@ class RandomScatter(object):
         vtx_selection = cmds.polyListComponentConversion(
             destination_selection, toVertex=True)
         vtx_selection = cmds.filterExpand(vtx_selection, selectionMask=31)
+        scatter_vertex_selection = self.select_percentage(vtx_selection, len(vtx_selection))
+        # scatter_vertex_selection = vtx_selection
 
-        scattered_instances = []
-        for vtx in vtx_selection:
-            scatter_instance = cmds.instance(source_selection)
-            self.random_scale(scatter_instance)
-            scattered_instances.extend(scatter_instance)
+        scattered_instances = self.get_scattered(source_selection, scatter_vertex_selection)
+        scatter_index = 0
+        for vtx in scatter_vertex_selection:
+            scatter_instance = scattered_instances[scatter_index]
+            # scale random or align to normals
             pos = cmds.xform([vtx], query=True, translation=True)
             cmds.xform(scatter_instance, translation=pos)
+            scatter_index += 1
+        # Create group for scattered objects
         cmds.group(scattered_instances, name="scattered")
+
+    def get_scattered(self, source_selection, verts):
+        scattered_instances = []
+        i = 0
+        for vtx in verts:
+            scatter_instance = cmds.instance(source_selection[i])
+            self.random_scale(scatter_instance)  # perform random scale
+            scattered_instances.append(scatter_instance[0])
+            if i == (len(source_selection) - 1):
+                i = 0
+            else:
+                i += 1
+        random.shuffle(scattered_instances)
+        return scattered_instances
 
     def random_scale(self, randomized_object):
         xRot = random.uniform(float(self.ui_scatter.xrotate_min_le.displayText()), float(self.ui_scatter.xrotate_max_le.displayText()))
@@ -264,23 +289,30 @@ class RandomScatter(object):
 
         cmds.scale(xScale, yScale, zScale, randomized_object)
 
-    def select_percentage(self):
-        selection = cmds.ls(selection=True, flatten=True)
-        selected_verts = cmds.polyListComponentConversion(selection,
-                                                          toVertex=True)
-        selected_verts = cmds.filterExpand(selected_verts, selectionMask=31)
-        seed = 453    #change seed
+    def select_percentage(self, vtx_selection, num_vtx):
+        random_percentage = self.ui_scatter.percentage_slider.value()
+        if random_percentage == 100:
+            return vtx_selection #no work to do
+        # random.shuffle(vtx_selection)
+        # selection = cmds.ls(selection=True, flatten=True)
+        # selected_verts = cmds.polyListComponentConversion(selection,
+        #                                                   toVertex=True)
+        # selected_verts = cmds.filterExpand(selected_verts, selectionMask=31)
+        seed = 453    # change seed: will need to grab value from user input text box, default 453
+        seed = int(self.ui_scatter.seed_le.displayText())
         percentage_selection = []
-        for idx in range(0, len(selected_verts)):
+        for idx in range(0, num_vtx - 1):
             random.seed(idx + seed)
             rand_value = random.random()
-            if rand_value <= 0.1:   #put slider value here
-                percentage_selection.append(selected_verts[idx])
-        cmds.select(percentage_selection)
+            if rand_value <= float(random_percentage)/100:   # put slider value here
+                percentage_selection.append(vtx_selection[idx])
+        # cmds.select(percentage_selection)
+        # print(percentage_selection)
+        return percentage_selection
 
-    def align_to_normals(self):
-        constraint = cmds.normalConstraint('', '') #put vertex and instance
-        print(constraint)
-        cmds.delete(constraint)
+    # def align_to_normals(self):
+    #     constraint = cmds.normalConstraint('', '') #put vertex and instance
+    #     print(constraint)
+    #     cmds.delete(constraint)
 
 
