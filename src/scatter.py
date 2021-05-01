@@ -34,7 +34,6 @@ class ScatterUI(QtWidgets.QDialog):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
         self.source_list_lay = self._create_source_list()
-        # self.add_object_lay = self._create_add_source_button()
         self.percentage_lay = self._create_percentage()
         self.seed_lay = self._create_seed()
         self.destination_lay = self._create_destination()
@@ -43,7 +42,6 @@ class ScatterUI(QtWidgets.QDialog):
         self.normals_checkbox_lay = self._create_normals_checkbox()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
-        # self.main_lay.addLayout(self.add_object_lay)
         self.main_lay.addLayout(self.source_list_lay)
         self.main_lay.addLayout(self.percentage_lay)
         self.main_lay.addLayout(self.seed_lay)
@@ -60,33 +58,21 @@ class ScatterUI(QtWidgets.QDialog):
     def _create_normals_checkbox(self):
         self.normals_checkbox = QtWidgets.QCheckBox("Align with Normals")
         self.normals_checkbox.setChecked(False)
-        self.normals_checkbox.toggled.connect(self._on_clicked) #might not need this connection
+        # self.normals_checkbox.toggled.connect(self._on_clicked) #might not need this connection
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.normals_checkbox, 0, 0)
         return layout
 
-    #might not need this connection
-    def _on_clicked(self):
-        self.normals_checkbox = self.sender()
-        print("this works") #this is where the checkbox logic is called i think lol
+    # #might not need this connection
+    # def _on_clicked(self):
+    #     self.normals_checkbox = self.sender()
+    #     print("this works") #this is where the checkbox logic is called i think lol
 
     def _create_button_ui(self):
         self.scatter_btn = QtWidgets.QPushButton("Scatter")
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.scatter_btn)
         return layout
-
-    # def _create_add_source_button(self):
-    #     self.add_source_btn = QtWidgets.QPushButton("Add Source Objects")
-    #     self.add_source_btn.clicked.connect(self.add_source_object)
-    #     layout = QtWidgets.QHBoxLayout()
-    #     layout.addWidget(self.add_source_btn)
-    #     return layout
-
-    def add_source_object(self):
-        #print("ajdfhaowehfsjdfh")
-        #self.source_dd.clear()
-        self._create_source_list()
 
     def _create_source_list(self):
         """create dropdown menu to select source object"""
@@ -96,25 +82,10 @@ class ScatterUI(QtWidgets.QDialog):
         #populate source list
         for obj in cmds.ls(type='mesh'):
             self.source_list.addItem(obj)
-
-        # self.source_list.addItem('hi')
-        # self.source_list.addItem('im')
-        # self.source_list.addItem('sad')
-        #print(self.source_list.selectionMode())
-        #print(self.source_list.selectionModel())
-        #self.source_list.addItem("Selected Objects")
-        # objects = cmds.ls(type="mesh")
-        # for geo in objects:
-        #     self.source_list.addItem(geo)
-        # self.source_list.currentIndexChanged.connect(
-        #     self.source_index_changed)
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.source_lbl)
         layout.addWidget(self.source_list)
         return layout
-    #
-    # def source_index_changed(self):
-    #     cmds.select(self.source_dd.currentText())
 
     @QtCore.Slot()
     def _create_percentage(self):
@@ -227,9 +198,6 @@ class ScatterUI(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def scatter_objects(self):
-        # self.scatter.scatter_objects(self.source_list.currentText(),
-        #                              cmds.ls(sl=True))
-        #self.scatter.scatter_objects(self.source_list.selectedItems(), cmds.ls(sl=True))
         source_objects = []
         for source_obj in self.source_list.selectedItems():
             source_objects.append(source_obj.text())
@@ -249,7 +217,6 @@ class RandomScatter(object):
             destination_selection, toVertex=True)
         vtx_selection = cmds.filterExpand(vtx_selection, selectionMask=31)
         scatter_vertex_selection = self.select_percentage(vtx_selection, len(vtx_selection))
-        # scatter_vertex_selection = vtx_selection
 
         scattered_instances = self.get_scattered(source_selection, scatter_vertex_selection)
         scatter_index = 0
@@ -258,6 +225,8 @@ class RandomScatter(object):
             # scale random or align to normals
             pos = cmds.xform([vtx], query=True, translation=True)
             cmds.xform(scatter_instance, translation=pos)
+            if self.ui_scatter.normals_checkbox.checkState != 0:
+                self.align_to_normals(vtx, scatter_instance)
             scatter_index += 1
         # Create group for scattered objects
         cmds.group(scattered_instances, name="scattered")
@@ -277,11 +246,11 @@ class RandomScatter(object):
         return scattered_instances
 
     def random_scale(self, randomized_object):
-        xRot = random.uniform(float(self.ui_scatter.xrotate_min_le.displayText()), float(self.ui_scatter.xrotate_max_le.displayText()))
-        yRot = random.uniform(float(self.ui_scatter.yrotate_min_le.displayText()), float(self.ui_scatter.yrotate_max_le.displayText()))
-        zRot = random.uniform(float(self.ui_scatter.zrotate_min_le.displayText()), float(self.ui_scatter.zrotate_max_le.displayText()))
-
-        cmds.rotate(xRot, yRot, zRot, randomized_object)
+        if self.ui_scatter.normals_checkbox.checkState() == 0:
+            xRot = random.uniform(float(self.ui_scatter.xrotate_min_le.displayText()), float(self.ui_scatter.xrotate_max_le.displayText()))
+            yRot = random.uniform(float(self.ui_scatter.yrotate_min_le.displayText()), float(self.ui_scatter.yrotate_max_le.displayText()))
+            zRot = random.uniform(float(self.ui_scatter.zrotate_min_le.displayText()), float(self.ui_scatter.zrotate_max_le.displayText()))
+            cmds.rotate(xRot, yRot, zRot, randomized_object)
 
         xScale = random.uniform(float(self.ui_scatter.xscale_min_le.displayText()), float(self.ui_scatter.xscale_max_le.displayText()))
         yScale = random.uniform(float(self.ui_scatter.yscale_min_le.displayText()), float(self.ui_scatter.yscale_max_le.displayText()))
@@ -293,26 +262,20 @@ class RandomScatter(object):
         random_percentage = self.ui_scatter.percentage_slider.value()
         if random_percentage == 100:
             return vtx_selection #no work to do
-        # random.shuffle(vtx_selection)
-        # selection = cmds.ls(selection=True, flatten=True)
-        # selected_verts = cmds.polyListComponentConversion(selection,
-        #                                                   toVertex=True)
-        # selected_verts = cmds.filterExpand(selected_verts, selectionMask=31)
         seed = 453    # change seed: will need to grab value from user input text box, default 453
         seed = int(self.ui_scatter.seed_le.displayText())
         percentage_selection = []
         for idx in range(0, num_vtx - 1):
             random.seed(idx + seed)
             rand_value = random.random()
-            if rand_value <= float(random_percentage)/100:   # put slider value here
+            if rand_value <= float(random_percentage)/100:
                 percentage_selection.append(vtx_selection[idx])
-        # cmds.select(percentage_selection)
-        # print(percentage_selection)
+
         return percentage_selection
 
-    # def align_to_normals(self):
-    #     constraint = cmds.normalConstraint('', '') #put vertex and instance
-    #     print(constraint)
-    #     cmds.delete(constraint)
+    def align_to_normals(self, vtx, scatter_instance):
+        constraint = cmds.normalConstraint(vtx, scatter_instance) #put vertex and instance
+        print(constraint)
+        cmds.delete(constraint)
 
 
