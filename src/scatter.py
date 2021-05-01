@@ -33,6 +33,7 @@ class ScatterUI(QtWidgets.QDialog):
     def create_ui(self):
         self.title_lbl = QtWidgets.QLabel("Scatter Tool")
         self.title_lbl.setStyleSheet("font: bold 20px")
+        self.group_name_lay = self._create_group_name()
         self.source_list_lay = self._create_source_list()
         self.percentage_lay = self._create_percentage()
         self.seed_lay = self._create_seed()
@@ -42,6 +43,7 @@ class ScatterUI(QtWidgets.QDialog):
         self.normals_checkbox_lay = self._create_normals_checkbox()
         self.main_lay = QtWidgets.QVBoxLayout()
         self.main_lay.addWidget(self.title_lbl)
+        self.main_lay.addLayout(self.group_name_lay)
         self.main_lay.addLayout(self.source_list_lay)
         self.main_lay.addLayout(self.percentage_lay)
         self.main_lay.addLayout(self.seed_lay)
@@ -63,10 +65,13 @@ class ScatterUI(QtWidgets.QDialog):
         layout.addWidget(self.normals_checkbox, 0, 0)
         return layout
 
-    # #might not need this connection
-    # def _on_clicked(self):
-    #     self.normals_checkbox = self.sender()
-    #     print("this works") #this is where the checkbox logic is called i think lol
+    def _create_group_name(self):
+        self.group_name_lbl = QtWidgets.QLabel("Enter Name of Group:")
+        self.group_name_le = QtWidgets.QLineEdit('ScatterGroup')
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self.group_name_lbl)
+        layout.addWidget(self.group_name_le)
+        return layout
 
     def _create_button_ui(self):
         self.scatter_btn = QtWidgets.QPushButton("Scatter")
@@ -229,7 +234,7 @@ class RandomScatter(object):
                 self.align_to_normals(vtx, scatter_instance)
             scatter_index += 1
         # Create group for scattered objects
-        cmds.group(scattered_instances, name="scattered")
+        cmds.group(scattered_instances, name=self.ui_scatter.group_name_le.displayText())
 
     def get_scattered(self, source_selection, verts):
         scattered_instances = []
