@@ -230,10 +230,10 @@ class RandomScatter(object):
             # scale random or align to normals
             pos = cmds.xform([vtx], query=True, translation=True)
             cmds.xform(scatter_instance, translation=pos)
-            if self.ui_scatter.normals_checkbox.checkState != 0:
+            if self.ui_scatter.normals_checkbox.checkState == 2:
                 self.align_to_normals(vtx, scatter_instance)
             scatter_index += 1
-        # Create group for scattered objects
+        # Create group for scattered objects, change name
         cmds.group(scattered_instances, name=self.ui_scatter.group_name_le.displayText())
 
     def get_scattered(self, source_selection, verts):
@@ -280,7 +280,6 @@ class RandomScatter(object):
 
     def align_to_normals(self, vtx, scatter_instance):
         constraint = cmds.normalConstraint(vtx, scatter_instance) #put vertex and instance
-        print(constraint)
         cmds.delete(constraint)
 
 
