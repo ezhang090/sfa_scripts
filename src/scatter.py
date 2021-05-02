@@ -60,14 +60,14 @@ class ScatterUI(QtWidgets.QDialog):
     def _create_normals_checkbox(self):
         self.normals_checkbox = QtWidgets.QCheckBox("Align with Normals")
         self.normals_checkbox.setChecked(False)
-        # self.normals_checkbox.toggled.connect(self._on_clicked) #might not need this connection
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.normals_checkbox, 0, 0)
         return layout
 
     def _create_group_name(self):
-        self.group_name_lbl = QtWidgets.QLabel("Enter Name of Group:")
-        self.group_name_le = QtWidgets.QLineEdit('ScatterGroup')
+        self.group_name_lbl = QtWidgets.QLabel("Group Name:")
+        self.group_name_lbl.setStyleSheet("font: bold")
+        self.group_name_le = QtWidgets.QLineEdit('ScatterGroup')  # Default group name
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.group_name_lbl)
         layout.addWidget(self.group_name_le)
@@ -80,14 +80,15 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def _create_source_list(self):
-        """create dropdown menu to select source object"""
-        self.source_lbl = QtWidgets.QLabel("Source Objects")
+        """select source objects from list"""
+        self.source_lbl = QtWidgets.QLabel("Source Objects:")
+        self.source_lbl.setStyleSheet("font: bold")
         self.source_list = QtWidgets.QListWidget()
         self.source_list.setSelectionMode(QAbstractItemView.MultiSelection)
-        #populate source list
+        # populate source list
         for obj in cmds.ls(type='mesh'):
             self.source_list.addItem(obj)
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.source_lbl)
         layout.addWidget(self.source_list)
         return layout
@@ -95,6 +96,7 @@ class ScatterUI(QtWidgets.QDialog):
     @QtCore.Slot()
     def _create_percentage(self):
         self.percentage_lbl = QtWidgets.QLabel("Percentage of Vertices:")
+        self.percentage_lbl.setStyleSheet("font: bold")
         self.percentage_slider = QtWidgets.QSlider(Qt.Horizontal)
         self.percentage_slider.setMinimum(0)
         self.percentage_slider.setMaximum(100)
@@ -108,12 +110,13 @@ class ScatterUI(QtWidgets.QDialog):
         return layout
 
     def _slider_changed(self):
-        print(self.percentage_slider.value())
+        # print(self.percentage_slider.value()) <-- debug
         self.percentage_value_lbl.setText(str(self.percentage_slider.value()))
 
     def _create_seed(self):
         self.seed_lbl = QtWidgets.QLabel("Set Seed:")
-        self.seed_le = QtWidgets.QLineEdit('453')
+        self.seed_lbl.setStyleSheet("font: bold")
+        self.seed_le = QtWidgets.QLineEdit('453')  # default seed is 453
         self.seed_lbl.setAlignment(Qt.AlignRight)
         self.seed_le.setMaximumWidth(50)
         self.seed_le.setAlignment(Qt.AlignHCenter)
@@ -124,9 +127,8 @@ class ScatterUI(QtWidgets.QDialog):
 
     def _create_destination(self):
         """select destination vertices"""
-        self.destination_lbl = QtWidgets.QLabel("Please select the "
-                                                   "objects and vertices you would "
-                                                   "like to scatter to.")
+        self.destination_lbl = QtWidgets.QLabel("Please select the objects and vertices you would like to scatter to.")
+        self.destination_lbl.setStyleSheet("font: bold 14px")
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.destination_lbl)
         return layout
@@ -137,7 +139,7 @@ class ScatterUI(QtWidgets.QDialog):
         self._max_input_ui(layout)
         return layout
 
-    def _min_input_ui(self, layout):
+    def _min_input_ui(self, layout):  # edit transform minimum UI
         self.xscale_min_le = QtWidgets.QLineEdit('1')
         self.xscale_min_le.setMinimumWidth(100)
         self.yscale_min_le = QtWidgets.QLineEdit('1')
@@ -158,7 +160,7 @@ class ScatterUI(QtWidgets.QDialog):
         layout.addWidget(self.zrotate_min_le, 6, 1)
         return layout
 
-    def _max_input_ui(self, layout):
+    def _max_input_ui(self, layout):  # edit transform maximum UI
         self.xscale_max_le = QtWidgets.QLineEdit('1')
         self.xscale_max_le.setMinimumWidth(100)
         self.yscale_max_le = QtWidgets.QLineEdit('1')
@@ -179,7 +181,7 @@ class ScatterUI(QtWidgets.QDialog):
         layout.addWidget(self.zrotate_max_le, 6, 2)
         return layout
 
-    def _create_input_headers(self):
+    def _create_input_headers(self):  # Labels for Min/Max transform inputs
         self.min_lbl = QtWidgets.QLabel("Minimum")
         self.min_lbl.setStyleSheet("font: bold")
         self.max_lbl = QtWidgets.QLabel("Maximum")
@@ -209,6 +211,7 @@ class ScatterUI(QtWidgets.QDialog):
 
         self.scatter.scatter_objects(source_objects,
                                      cmds.ls(sl=True))
+
 
 class RandomScatter(object):
     """random scatter logic."""
@@ -266,8 +269,8 @@ class RandomScatter(object):
     def select_percentage(self, vtx_selection, num_vtx):
         random_percentage = self.ui_scatter.percentage_slider.value()
         if random_percentage == 100:
-            return vtx_selection #no work to do
-        seed = 453    # change seed: will need to grab value from user input text box, default 453
+            return vtx_selection  # no work to do
+        # change seed: will need to grab value from user input text box
         seed = int(self.ui_scatter.seed_le.displayText())
         percentage_selection = []
         for idx in range(0, num_vtx - 1):
@@ -279,7 +282,7 @@ class RandomScatter(object):
         return percentage_selection
 
     def align_to_normals(self, vtx, scatter_instance):
-        constraint = cmds.normalConstraint(vtx, scatter_instance) #put vertex and instance
+        constraint = cmds.normalConstraint(vtx, scatter_instance)
         cmds.delete(constraint)
 
 
